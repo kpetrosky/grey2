@@ -1,15 +1,34 @@
-const stripe = require('stripe')('YOUR_STRIPE_SECRET_KEY');
+// server.js
 
-// Example route to create a payment intent
-app.post('/payment/create', async (req, res) => {
-  const { amount, currency } = req.body;
-  try {
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount,
-      currency,
-    });
-    res.json({ clientSecret: paymentIntent.client_secret });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+// Import dependencies
+const express = require('express');
+const mongoose = require('mongoose');
+
+// Create an instance of the Express application
+const app = express();
+
+// Set up middleware
+app.use(express.json());
+
+// Connect to the MongoDB database
+mongoose.connect('mongodb://localhost/mydatabase', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(() => {
+    console.log('Connected to MongoDB');
+  })
+  .catch((error) => {
+    console.error('MongoDB connection error:', error);
+  });
+
+// Define routes
+app.get('/', (req, res) => {
+  res.send('Hello, world!');
+});
+
+// Start the server
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
 });

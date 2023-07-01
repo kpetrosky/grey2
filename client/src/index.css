@@ -9,3 +9,21 @@
     --periwinkle: #afbbf2ff;
     --mint-green: #d3fff3ff;
   }
+
+
+  /* MyComponent.module.css */
+.heading {
+  color: blue;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.paragraph {
+  background-color: #afbbf2ff;
+  padding: 10px;
+}
+
+.navbars {
+    background-color: #33658aff;
+    font: 24px  #d3fff3ff;
+}

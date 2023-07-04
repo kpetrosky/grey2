@@ -1,4 +1,7 @@
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+
+const saltRounds = 10; // Number of salt rounds for bcrypt
 
 const secret = 'mysecretsshhhhh';
 const expiration = '2h';
@@ -30,5 +33,11 @@ module.exports = {
     const payload = { firstName, email, _id };
 
     return jwt.sign({ data: payload }, secret, { expiresIn: expiration });
+  },
+  hashPassword: function (password) {
+    return bcrypt.hashSync(password, saltRounds);
+  },
+  comparePassword: function (password, hashedPassword) {
+    return bcrypt.compareSync(password, hashedPassword);
   },
 };

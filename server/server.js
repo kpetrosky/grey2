@@ -1,24 +1,26 @@
 const express = require('express');
 const { graphql } = require('graphql');
 const path = require('path');
-const authMiddleware = require('./utils/auth');
+const { authMiddleware } = require('./utils/auth');
 const { typeDefs, resolvers } = require('./schemas');
-const db = require('./config/connection');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
 
 const PORT = process.env.PORT || 3001;
 const app = express();
 
 const root = resolvers;
 
+app.use(bodyParser.json());
 app.use(
   '/graphql',
   express.json(),
-  authMiddleware, // Apply the authMiddleware to the GraphQL endpoint
+  authMiddleware,
   (req, res) => {
     graphql({
-      schema: schema,
+      schema: typeDefs,
       rootValue: root,
-      contextValue: { user: req.user }, // Pass the authenticated user to the context
+      contextValue: { user: req.user },
       variableValues: req.body.variables,
       operationName: req.body.operationName,
       source: req.body.query,
@@ -28,6 +30,8 @@ app.use(
   }
 );
 
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.urlencoded({ extended: false }));
 
 // Serve up static assets
@@ -41,9 +45,15 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/build/index.html'));
 });
 
-db.once('open', () => {
+mongoose.connect('mongodb://localhost:27017/mydatabase', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
+mongoose.connection.once('open', () => {
   app.listen(PORT, () => {
     console.log(`API server running on port ${PORT}!`);
     console.log(`Use GraphQL at http://localhost:${PORT}/graphql`);
   });
 });
+

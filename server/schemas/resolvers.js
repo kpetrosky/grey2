@@ -1,46 +1,143 @@
-const { About, Product, CustomWork } = require('../models');
+const { AuthenticationError } = require('apollo-server-express');
+const { User, Product, Category, Order } = require('../models');
+const { signToken } = require('../utils/auth');
+const stripe = require('stripe')('sk_test_4eC39HqLyjWDarjtT1zdp7dc');
 
 const resolvers = {
   Query: {
-    abouts: async () => {
-      return About.find().sort({ createdAt: -1 });
+    categories: async () => {
+      return await Category.find();
     },
-    about: async (parent, { aboutId }) => {
-      return About.findOne({ _id: aboutId });
+    products: async (parent, { category, name }) => {
+      const params = {};
+
+      if (category) {
+        params.category = category;
+      }
+
+      if (name) {
+        params.name = {
+          $regex: name
+        };
+      }
+
+      return await Product.find(params).populate('category');
     },
-    products: async () => {
-      return Product.find().sort({ createdAt: -1 });
+    product: async (parent, { _id }) => {
+      return await Product.findById(_id).populate('category');
     },
-    product: async (parent, { productId }) => {
-      return Product.findOne({ _id: productId });
+    user: async (parent, args, context) => {
+      if (context.user) {
+        const user = await User.findById(context.user._id).populate({
+          path: 'orders.products',
+          populate: 'category'
+        });
+
+        user.orders.sort((a, b) => b.purchaseDate - a.purchaseDate);
+
+        return user;
+      }
+
+      throw new AuthenticationError('Not logged in');
     },
-    customWorks: async () => {
-      return CustomWork.find().sort({ createdAt: -1 });
+    order: async (parent, { _id }, context) => {
+      if (context.user) {
+        const user = await User.findById(context.user._id).populate({
+          path: 'orders.products',
+          populate: 'category'
+        });
+
+        return user.orders.id(_id);
+      }
+
+      throw new AuthenticationError('Not logged in');
     },
-    customWork: async (parent, { customWorkId }) => {
-      return CustomWork.findOne({ _id: customWorkId });
-    },
+    checkout: async (parent, args, context) => {
+      const url = new URL(context.headers.referer).origin;
+      const order = new Order({ products: args.products });
+      const line_items = [];
+
+      const { products } = await order.populate('products');
+
+      for (let i = 0; i < products.length; i++) {
+        const product = await stripe.products.create({
+          name: products[i].name,
+          description: products[i].description,
+          images: [`${url}/images/${products[i].image}`]
+        });
+
+        const price = await stripe.prices.create({
+          product: product.id,
+          unit_amount: products[i].price * 100,
+          currency: 'usd',
+        });
+
+        line_items.push({
+          price: price.id,
+          quantity: 1
+        });
+      }
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items,
+        mode: 'payment',
+        success_url: `${url}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${url}/`
+      });
+
+      return { session: session.id };
+    }
   },
   Mutation: {
-    addAbout: async (parent, { aboutText, aboutAuthor }) => {
-      return About.create({ aboutText, aboutAuthor });
+    addUser: async (parent, args) => {
+      const user = await User.create(args);
+      const token = signToken(user);
+
+      return { token, user };
     },
-    removeAbout: async (parent, { aboutId }) => {
-      return About.findOneAndDelete({ _id: aboutId });
+    addOrder: async (parent, { products }, context) => {
+      console.log(context);
+      if (context.user) {
+        const order = new Order({ products });
+
+        await User.findByIdAndUpdate(context.user._id, { $push: { orders: order } });
+
+        return order;
+      }
+
+      throw new AuthenticationError('Not logged in');
     },
-    addProduct: async (parent, { productName, productDescription }) => {
-      return Product.create({ productName, productDescription });
+    updateUser: async (parent, args, context) => {
+      if (context.user) {
+        return await User.findByIdAndUpdate(context.user._id, args, { new: true });
+      }
+
+      throw new AuthenticationError('Not logged in');
     },
-    removeProduct: async (parent, { productId }) => {
-      return Product.findOneAndDelete({ _id: productId });
+    updateProduct: async (parent, { _id, quantity }) => {
+      const decrement = Math.abs(quantity) * -1;
+
+      return await Product.findByIdAndUpdate(_id, { $inc: { quantity: decrement } }, { new: true });
     },
-    addCustomWork: async (parent, { customWorkName, customWorkDescription }) => {
-      return CustomWork.create({ customWorkName, customWorkDescription });
-    },
-    removeCustomWork: async (parent, { customWorkId }) => {
-      return CustomWork.findOneAndDelete({ _id: customWorkId });
-    },
-  },
+    login: async (parent, { email, password }) => {
+      const user = await User.findOne({ email });
+
+      if (!user) {
+        throw new AuthenticationError('Incorrect credentials');
+      }
+
+      const correctPw = await user.isCorrectPassword(password);
+
+      if (!correctPw) {
+        throw new AuthenticationError('Incorrect credentials');
+      }
+
+      const token = signToken(user);
+
+      return { token, user };
+    }
+  }
 };
 
 module.exports = resolvers;

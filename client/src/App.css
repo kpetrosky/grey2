@@ -1,0 +1,121 @@
+:root {
+  --timberwolf: #d3d5d4ff;
+--cambridge-blue: #a2c5acff;
+--ash-gray: #9db5b2ff;
+--slate-gray: #878e99ff;
+--pomp-and-power: #7f6a93ff;
+--light-cyan: #e0fbfcff;
+--light-blue: #c2dfe3ff;
+--cadet-gray: #9db4c0ff;
+--paynes-gray: #5c6b73ff;
+--gunmetal: #253237ff;
+--misty-rose: #ffd9daff;
+--blush: #ea638cff;
+--murrey: #89023eff;
+--gunmetal: #30343fff;
+--eerie-black: #1b2021ff;
+}
+
+/* Reset default browser styles */
+body, h1, p, ul, li {
+  margin: 0;
+  padding: 0;
+}
+
+/* Typography */
+body {
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+h1 {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+p {
+  font-size: 18px;
+}
+
+/* Header */
+header {
+  background-color: #f9f9f9;
+  padding: 20px;
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+}
+
+/* Navigation */
+nav {
+  margin-top: 10px;
+}
+
+nav ul {
+  list-style: none;
+}
+
+nav li {
+  display: inline-block;
+  margin-right: 10px;
+}
+
+nav a {
+  text-decoration: none;
+  color: #333;
+  padding: 5px;
+}
+
+nav a:hover {
+  background-color: #333;
+  color: #fff;
+}
+
+/* Product listing */
+.product {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.product img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  margin-right: 10px;
+}
+
+.product-name {
+  font-weight: bold;
+}
+
+.product-price {
+  color: #888;
+}
+
+/* Footer */
+footer {
+  background-color: #333;
+  color: #fff;
+  padding: 20px;
+  text-align: center;
+}
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
